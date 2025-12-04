@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3'
+import { Head, Link, router } from '@inertiajs/vue3'
 import Button from 'primevue/button'
 import Card from 'primevue/card'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Tag from 'primevue/tag'
 import ProgressBar from 'primevue/progressbar'
-
+import { ref } from 'vue'
+import Menu from 'primevue/menu'
 const props = defineProps<{
     graduate: any
     ceremony: any
@@ -22,6 +23,18 @@ const props = defineProps<{
     } | null
 }>()
 
+const userMenu = ref()
+const userMenuItems = ref([
+    {
+        label: 'Logout',
+        icon: 'pi pi-sign-out',
+        command: () => router.post('/logout'),
+    },
+])
+
+const toggleUserMenu = (event: Event) => {
+    userMenu.value.toggle(event)
+}
 const getStatusSeverity = (status: string) => {
     const severityMap: Record<string, string> = {
         Active: 'success',
@@ -57,6 +70,16 @@ const getRequestStatusSeverity = (status: string) => {
                 <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
                     View your tickets and ceremony information
                 </p>
+
+                <div class="mt-4 flex justify-end">
+                    <Button
+                        label="Profile"
+                        icon="pi pi-user"
+                        class="w-full"
+                        @click="toggleUserMenu"
+                    />
+                    <Menu ref="userMenu" :model="userMenuItems" popup class="w-56" />
+                </div>
             </div>
         </div>
 
@@ -87,6 +110,7 @@ const getRequestStatusSeverity = (status: string) => {
                         <div class="flex items-center gap-3">
                             <i class="pi pi-calendar text-2xl text-blue-600"></i>
                             <span>Your Graduation Ceremony</span>
+                            <Menu ref="userMenu" :model="userMenuItems" popup class="w-56" />
                         </div>
                     </template>
                     <template #content>
