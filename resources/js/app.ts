@@ -1,7 +1,10 @@
 import '../css/app.css';
+import 'primeicons/primeicons.css';
 
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
+import PrimeVue from 'primevue/config';
+import Aura from '@primevue/themes/aura';
 import type { DefineComponent } from 'vue';
 import { createApp, h } from 'vue';
 import { initializeTheme } from './composables/useAppearance';
@@ -18,6 +21,14 @@ createInertiaApp({
     setup({ el, App, props, plugin }) {
         createApp({ render: () => h(App, props) })
             .use(plugin)
+            .use(PrimeVue, {
+                theme: {
+                    preset: Aura,
+                    options: {
+                        darkModeSelector: '.dark',
+                    },
+                },
+            })
             .mount(el);
     },
     progress: {
