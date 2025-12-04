@@ -7,11 +7,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, TwoFactorAuthenticatable;
+    use HasFactory, HasRoles, Notifiable, TwoFactorAuthenticatable;
 
     /**
      * The attributes that are mass assignable.
@@ -48,5 +49,25 @@ class User extends Authenticatable
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
         ];
+    }
+
+    public function graduates()
+    {
+        return $this->hasMany(Graduate::class);
+    }
+
+    public function ticketRequestsReviewed()
+    {
+        return $this->hasMany(TicketRequest::class, 'reviewed_by');
+    }
+
+    public function scannedTickets()
+    {
+        return $this->hasMany(Ticket::class, 'scanned_by');
+    }
+
+    public function entryLogs()
+    {
+        return $this->hasMany(EntryLog::class, 'scanned_by');
     }
 }
