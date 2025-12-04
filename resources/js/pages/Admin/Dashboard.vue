@@ -1,13 +1,21 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3'
+import { Head, Link, router } from '@inertiajs/vue3'
 import Button from 'primevue/button'
 import Card from 'primevue/card'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Tag from 'primevue/tag'
-import { computed } from 'vue'
+import Avatar from 'primevue/avatar'
+import Menu from 'primevue/menu'
+import { ref, computed } from 'vue'
 
 const props = defineProps<{
+    auth: {
+        user: {
+            name: string
+            email: string
+        }
+    }
     stats: {
         total_ceremonies: number
         active_ceremonies: number
@@ -22,6 +30,34 @@ const props = defineProps<{
     recentEntries: any[]
     ceremonyStats: any[]
 }>()
+
+const userMenu = ref()
+const userMenuItems = ref([
+    {
+        label: 'Profile',
+        icon: 'pi pi-user',
+        command: () => router.visit('/settings/profile'),
+    },
+    {
+        separator: true,
+    },
+    {
+        label: 'Logout',
+        icon: 'pi pi-sign-out',
+        command: () => router.post('/logout'),
+    },
+])
+
+const toggleUserMenu = (event: Event) => {
+    userMenu.value.toggle(event)
+}
+
+const userInitials = computed(() => {
+    const names = props.auth.user.name.split(' ')
+    return names.length >= 2
+        ? names[0][0] + names[names.length - 1][0]
+        : names[0][0]
+})
 
 const getStatusSeverity = (status: string) => {
     const severityMap: Record<string, string> = {
@@ -46,37 +82,63 @@ const getVerificationSeverity = (status: string) => {
 </script>
 
 <template>
-    <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
         <Head title="Admin Dashboard" />
 
-        <!-- Header -->
-        <div class="bg-white shadow dark:bg-gray-800">
-            <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
-                            Admin Dashboard
-                        </h1>
-                        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                            System overview and statistics
-                        </p>
-                    </div>
-                    <div class="flex gap-3">
-                        <Link :href="`/admin/ceremonies/create`">
-                            <Button label="New Ceremony" icon="pi pi-plus" />
-                        </Link>
-                        <Link :href="`/admin/graduates-import`">
-                            <Button label="Import Graduates" icon="pi pi-upload" severity="secondary" />
-                        </Link>
+        <!-- Beautiful Header -->
+        <header class="sticky top-0 z-50 border-b border-gray-200 bg-white/80 backdrop-blur-md shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="flex h-16 items-center justify-between">
+                    <Link href="/dashboard" class="flex items-center gap-3 transition-opacity hover:opacity-80">
+                        <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 shadow-lg ring-2 ring-white/20">
+                            <i class="pi pi-ticket text-xl text-white"></i>
+                        </div>
+                        <div class="hidden sm:block">
+                            <h1 class="text-lg font-bold text-gray-900 dark:text-white">
+                                Graduation Ticketing
+                            </h1>
+                            <p class="text-xs text-gray-600 dark:text-gray-400">
+                                Admin Dashboard
+                            </p>
+                        </div>
+                    </Link>
+
+                    <div class="flex items-center gap-3">
+                        <div class="hidden text-right md:block">
+                            <p class="text-sm font-semibold text-gray-900 dark:text-white">
+                                {{ auth.user.name }}
+                            </p>
+                            <p class="text-xs text-gray-600 dark:text-gray-400">
+                                Administrator
+                            </p>
+                        </div>
+                        <Avatar
+                            :label="userInitials"
+                            class="cursor-pointer bg-gradient-to-br from-blue-600 to-purple-600 text-white shadow-md ring-2 ring-white/20 transition-all hover:shadow-lg hover:ring-4"
+                            size="large"
+                            shape="circle"
+                            @click="toggleUserMenu"
+                        />
+                        <Menu ref="userMenu" :model="userMenuItems" popup class="w-56" />
                     </div>
                 </div>
             </div>
-        </div>
+        </header>
 
         <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+            <!-- Welcome Section -->
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold text-gray-900 dark:text-white">
+                    Welcome back, {{ auth.user.name.split(' ')[0] }}! 👋
+                </h2>
+                <p class="mt-2 text-gray-600 dark:text-gray-400">
+                    Here's what's happening with your graduation ticketing system today.
+                </p>
+            </div>
+
             <!-- Statistics Grid -->
             <div class="mb-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                <Card class="shadow-sm">
+                <Card class="overflow-hidden shadow-lg transition-all hover:shadow-xl">
                     <template #content>
                         <div class="flex items-center justify-between">
                             <div>
@@ -86,18 +148,18 @@ const getVerificationSeverity = (status: string) => {
                                 <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
                                     {{ stats.total_ceremonies }}
                                 </p>
-                                <p class="mt-1 text-xs text-gray-500">
-                                    {{ stats.active_ceremonies }} active
+                                <p class="mt-1 text-xs text-green-600 dark:text-green-400">
+                                    <i class="pi pi-check-circle"></i> {{ stats.active_ceremonies }} active
                                 </p>
                             </div>
-                            <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900">
-                                <i class="pi pi-calendar text-2xl text-blue-600 dark:text-blue-400"></i>
+                            <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
+                                <i class="pi pi-calendar text-3xl text-white"></i>
                             </div>
                         </div>
                     </template>
                 </Card>
 
-                <Card class="shadow-sm">
+                <Card class="overflow-hidden shadow-lg transition-all hover:shadow-xl">
                     <template #content>
                         <div class="flex items-center justify-between">
                             <div>
@@ -107,15 +169,18 @@ const getVerificationSeverity = (status: string) => {
                                 <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
                                     {{ stats.total_graduates }}
                                 </p>
+                                <p class="mt-1 text-xs text-gray-500">
+                                    Registered students
+                                </p>
                             </div>
-                            <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900">
-                                <i class="pi pi-users text-2xl text-green-600 dark:text-green-400"></i>
+                            <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-green-500 to-green-600 shadow-lg">
+                                <i class="pi pi-users text-3xl text-white"></i>
                             </div>
                         </div>
                     </template>
                 </Card>
 
-                <Card class="shadow-sm">
+                <Card class="overflow-hidden shadow-lg transition-all hover:shadow-xl">
                     <template #content>
                         <div class="flex items-center justify-between">
                             <div>
@@ -125,18 +190,18 @@ const getVerificationSeverity = (status: string) => {
                                 <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
                                     {{ stats.total_tickets }}
                                 </p>
-                                <p class="mt-1 text-xs text-gray-500">
+                                <p class="mt-1 text-xs text-purple-600 dark:text-purple-400">
                                     {{ stats.tickets_used }} used ({{ stats.ticket_utilization_rate }}%)
                                 </p>
                             </div>
-                            <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900">
-                                <i class="pi pi-ticket text-2xl text-purple-600 dark:text-purple-400"></i>
+                            <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg">
+                                <i class="pi pi-ticket text-3xl text-white"></i>
                             </div>
                         </div>
                     </template>
                 </Card>
 
-                <Card class="shadow-sm">
+                <Card class="overflow-hidden shadow-lg transition-all hover:shadow-xl">
                     <template #content>
                         <div class="flex items-center justify-between">
                             <div>
@@ -146,23 +211,42 @@ const getVerificationSeverity = (status: string) => {
                                 <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
                                     {{ stats.pending_requests }}
                                 </p>
-                                <Link v-if="stats.pending_requests > 0" :href="`/admin/ticket-requests?status=Pending`" class="mt-1 text-xs text-blue-600 hover:underline dark:text-blue-400">
+                                <Link v-if="stats.pending_requests > 0" :href="`/admin/ticket-requests?status=Pending`" class="mt-1 text-xs text-orange-600 hover:underline dark:text-orange-400">
                                     Review now →
                                 </Link>
                             </div>
-                            <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100 dark:bg-orange-900">
-                                <i class="pi pi-inbox text-2xl text-orange-600 dark:text-orange-400"></i>
+                            <div class="flex h-14 w-14 items-center justify-between rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 shadow-lg">
+                                <i class="pi pi-inbox text-3xl text-white"></i>
                             </div>
                         </div>
                     </template>
                 </Card>
             </div>
 
+            <!-- Quick Actions -->
+            <div class="mb-8 flex flex-wrap gap-3">
+                <Link :href="`/admin/ceremonies/create`">
+                    <Button label="New Ceremony" icon="pi pi-plus" class="shadow-md" />
+                </Link>
+                <Link :href="`/admin/graduates-import`">
+                    <Button label="Import Graduates" icon="pi pi-upload" severity="secondary" class="shadow-md" />
+                </Link>
+                <Link :href="`/admin/ceremonies`">
+                    <Button label="Manage Ceremonies" icon="pi pi-calendar" severity="secondary" outlined />
+                </Link>
+                <Link :href="`/admin/ticket-requests`">
+                    <Button label="View All Requests" icon="pi pi-inbox" severity="secondary" outlined />
+                </Link>
+            </div>
+
             <!-- Upcoming Ceremonies -->
-            <Card class="mb-8 shadow-sm">
+            <Card class="mb-8 shadow-lg">
                 <template #title>
                     <div class="flex items-center justify-between">
-                        <span>Upcoming Ceremonies</span>
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-calendar text-blue-600"></i>
+                            <span>Upcoming Ceremonies</span>
+                        </div>
                         <Link :href="`/admin/ceremonies`">
                             <Button label="View All" size="small" text />
                         </Link>
@@ -196,10 +280,13 @@ const getVerificationSeverity = (status: string) => {
             </Card>
 
             <!-- Recent Ticket Requests -->
-            <Card class="mb-8 shadow-sm">
+            <Card class="mb-8 shadow-lg">
                 <template #title>
                     <div class="flex items-center justify-between">
-                        <span>Recent Ticket Requests</span>
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-inbox text-orange-600"></i>
+                            <span>Recent Ticket Requests</span>
+                        </div>
                         <Link :href="`/admin/ticket-requests`">
                             <Button label="View All" size="small" text />
                         </Link>
@@ -232,10 +319,13 @@ const getVerificationSeverity = (status: string) => {
             </Card>
 
             <!-- Recent Entries -->
-            <Card class="shadow-sm">
+            <Card class="shadow-lg">
                 <template #title>
                     <div class="flex items-center justify-between">
-                        <span>Recent Entries</span>
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-check-circle text-green-600"></i>
+                            <span>Recent Entries</span>
+                        </div>
                         <Link :href="`/security/entry-logs`">
                             <Button label="View All" size="small" text />
                         </Link>
