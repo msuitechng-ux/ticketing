@@ -1,10 +1,10 @@
-import '../css/app.css';
 import 'primeicons/primeicons.css';
+import '../css/app.css';
 
 import { createInertiaApp } from '@inertiajs/vue3';
+import Aura from '@primevue/themes/aura';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import PrimeVue from 'primevue/config';
-import Aura from '@primevue/themes/aura';
 import type { DefineComponent } from 'vue';
 import { createApp, h } from 'vue';
 import { initializeTheme } from './composables/useAppearance';
