@@ -7,6 +7,10 @@ import Column from 'primevue/column'
 import Tag from 'primevue/tag'
 import Avatar from 'primevue/avatar'
 import Menu from 'primevue/menu'
+import TicketsByCeremonyChart from '@/components/charts/TicketsByCeremonyChart.vue'
+import RequestStatusChart from '@/components/charts/RequestStatusChart.vue'
+import FacultyDistributionChart from '@/components/charts/FacultyDistributionChart.vue'
+import DegreeLevelChart from '@/components/charts/DegreeLevelChart.vue'
 import { ref, computed } from 'vue'
 
 const props = defineProps<{
@@ -29,6 +33,17 @@ const props = defineProps<{
     recentTicketRequests: any[]
     recentEntries: any[]
     ceremonyStats: any[]
+    analytics: {
+        requestStatusBreakdown: Record<string, number>
+        facultyDistribution: Record<string, number>
+        degreeLevelDistribution: Record<string, number>
+        ticketsByCeremony: Array<{
+            name: string
+            allocated: number
+            used: number
+            available: number
+        }>
+    }
 }>()
 
 const userMenu = ref()
@@ -237,6 +252,69 @@ const getVerificationSeverity = (status: string) => {
                 <Link :href="`/admin/ticket-requests`">
                     <Button label="View All Requests" icon="pi pi-inbox" severity="secondary" outlined />
                 </Link>
+            </div>
+
+            <!-- Analytics Section -->
+            <div class="mb-8">
+                <h3 class="mb-6 text-2xl font-bold text-gray-900 dark:text-white">
+                    <i class="pi pi-chart-bar mr-2 text-blue-600"></i>
+                    Analytics & Insights
+                </h3>
+
+                <!-- Charts Grid -->
+                <div class="grid gap-6 lg:grid-cols-2">
+                    <!-- Tickets by Ceremony -->
+                    <Card class="shadow-lg">
+                        <template #title>
+                            <div class="flex items-center gap-2">
+                                <i class="pi pi-ticket text-blue-600"></i>
+                                <span>Ticket Allocation by Ceremony</span>
+                            </div>
+                        </template>
+                        <template #content>
+                            <TicketsByCeremonyChart :data="analytics.ticketsByCeremony" />
+                        </template>
+                    </Card>
+
+                    <!-- Request Status Breakdown -->
+                    <Card class="shadow-lg">
+                        <template #title>
+                            <div class="flex items-center gap-2">
+                                <i class="pi pi-chart-pie text-orange-600"></i>
+                                <span>Request Status Distribution</span>
+                            </div>
+                        </template>
+                        <template #content>
+                            <RequestStatusChart :data="analytics.requestStatusBreakdown" />
+                        </template>
+                    </Card>
+
+                    <!-- Faculty Distribution -->
+                    <Card class="shadow-lg">
+                        <template #title>
+                            <div class="flex items-center gap-2">
+                                <i class="pi pi-building text-green-600"></i>
+                                <span>Graduates by Faculty</span>
+                            </div>
+                        </template>
+                        <template #content>
+                            <FacultyDistributionChart :data="analytics.facultyDistribution" />
+                        </template>
+                    </Card>
+
+                    <!-- Degree Level Distribution -->
+                    <Card class="shadow-lg">
+                        <template #title>
+                            <div class="flex items-center gap-2">
+                                <i class="pi pi-book text-purple-600"></i>
+                                <span>Graduates by Degree Level</span>
+                            </div>
+                        </template>
+                        <template #content>
+                            <DegreeLevelChart :data="analytics.degreeLevelDistribution" />
+                        </template>
+                    </Card>
+                </div>
             </div>
 
             <!-- Upcoming Ceremonies -->

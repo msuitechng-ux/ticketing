@@ -48,6 +48,7 @@ class DashboardController extends Controller
 
         $ceremonyStats = Ceremony::query()
             ->where('is_active', true)
+            ->withCount('graduates')
             ->get()
             ->map(function ($ceremony) {
                 return [
@@ -58,6 +59,49 @@ class DashboardController extends Controller
                     'total_tickets_allocated' => $ceremony->getTotalTicketsAllocatedAttribute(),
                     'total_tickets_used' => $ceremony->getTotalTicketsUsedAttribute(),
                     'utilization_rate' => $ceremony->getUtilizationRateAttribute(),
+                ];
+            });
+
+        // Request status breakdown for pie/bar charts
+        $requestStatusBreakdown = [
+            'Pending' => TicketRequest::where('status', 'Pending')->count(),
+            'Approved' => TicketRequest::where('status', 'Approved')->count(),
+            'Denied' => TicketRequest::where('status', 'Denied')->count(),
+            'Waitlisted' => TicketRequest::where('status', 'Waitlisted')->count(),
+            'Partially Approved' => TicketRequest::where('status', 'Partially Approved')->count(),
+        ];
+
+        // Faculty distribution for bar chart
+        $facultyDistribution = Graduate::query()
+            ->selectRaw('faculty, COUNT(*) as count')
+            ->groupBy('faculty')
+            ->orderBy('count', 'desc')
+            ->get()
+            ->mapWithKeys(function ($item) {
+                return [$item->faculty => $item->count];
+            });
+
+        // Degree level distribution for bar chart
+        $degreeLevelDistribution = Graduate::query()
+            ->selectRaw('degree_level, COUNT(*) as count')
+            ->groupBy('degree_level')
+            ->orderBy('count', 'desc')
+            ->get()
+            ->mapWithKeys(function ($item) {
+                return [$item->degree_level => $item->count];
+            });
+
+        // Ticket allocation vs usage by ceremony for bar chart
+        $ticketsByCeremony = Ceremony::query()
+            ->where('is_active', true)
+            ->withCount('graduates')
+            ->get()
+            ->map(function ($ceremony) {
+                return [
+                    'name' => $ceremony->name,
+                    'allocated' => $ceremony->getTotalTicketsAllocatedAttribute(),
+                    'used' => $ceremony->getTotalTicketsUsedAttribute(),
+                    'available' => $ceremony->getTotalTicketsAllocatedAttribute() - $ceremony->getTotalTicketsUsedAttribute(),
                 ];
             });
 
@@ -75,6 +119,12 @@ class DashboardController extends Controller
             'recentTicketRequests' => $recentTicketRequests,
             'recentEntries' => $recentEntries,
             'ceremonyStats' => $ceremonyStats,
+            'analytics' => [
+                'requestStatusBreakdown' => $requestStatusBreakdown,
+                'facultyDistribution' => $facultyDistribution,
+                'degreeLevelDistribution' => $degreeLevelDistribution,
+                'ticketsByCeremony' => $ticketsByCeremony,
+            ],
         ]);
     }
 
