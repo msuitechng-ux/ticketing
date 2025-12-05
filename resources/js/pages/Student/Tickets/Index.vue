@@ -107,6 +107,11 @@ const getStatusSeverity = (status: string) => {
                                 No tickets allocated yet
                             </div>
                         </template>
+                        <Column field="ceremony.name" header="Ceremony">
+                            <template #body="{ data }">
+                                {{ data.ceremony?.name || '-' }}
+                            </template>
+                        </Column>
                         <Column field="ticket_code" header="Ticket Code">
                             <template #body="{ data }">
                                 <code class="rounded bg-gray-100 px-2 py-1 text-sm font-mono dark:bg-gray-800">

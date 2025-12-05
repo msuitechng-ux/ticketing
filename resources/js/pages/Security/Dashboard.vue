@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3'
+import { Head, Link, router } from '@inertiajs/vue3'
 import Button from 'primevue/button'
 import Card from 'primevue/card'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Tag from 'primevue/tag'
-
+import { ref } from 'vue'
+import Menu from 'primevue/menu'
 const props = defineProps<{
     stats: {
         today_scans: number
@@ -25,6 +26,20 @@ const getVerificationSeverity = (status: string) => {
         'Fraud Attempt': 'danger',
     }
     return severityMap[status] || 'info'
+}
+
+
+const userMenu = ref()
+const userMenuItems = ref([
+    {
+        label: 'Logout',
+        icon: 'pi pi-sign-out',
+        command: () => router.post('/logout'),
+    },
+])
+
+const toggleUserMenu = (event: Event) => {
+    userMenu.value.toggle(event)
 }
 </script>
 
@@ -47,6 +62,15 @@ const getVerificationSeverity = (status: string) => {
                     <Link :href="`/security/scanner`">
                         <Button label="Open Scanner" icon="pi pi-qrcode" size="large" />
                     </Link>
+                     <div >
+                    <Button
+                        label="Profile"
+                        icon="pi pi-user"
+                        class="w-full"
+                        @click="toggleUserMenu"
+                    />
+                    <Menu ref="userMenu" :model="userMenuItems" popup class="w-56" />
+                </div>
                 </div>
             </div>
         </div>

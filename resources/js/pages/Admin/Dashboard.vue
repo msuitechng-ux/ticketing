@@ -377,12 +377,25 @@ const getVerificationSeverity = (status: string) => {
                                 No recent ticket requests
                             </div>
                         </template>
-                        <Column field="graduate.student_name" header="Student" />
-                        <Column field="graduate.ceremony.name" header="Ceremony" />
+                        <Column field="graduate.student_name" header="Student">
+                            <template #body="{ data }">
+                                {{ data.graduate?.student_name || data.graduate?.user?.name || '-' }}
+                            </template>
+                        </Column>
+                        <Column field="graduate.ceremony.name" header="Ceremony">
+                            <template #body="{ data }">
+                                {{ data.graduate?.ceremony?.name || '-' }}
+                            </template>
+                        </Column>
                         <Column field="requested_quantity" header="Requested" />
                         <Column field="status" header="Status">
                             <template #body="{ data }">
                                 <Tag :value="data.status" :severity="getStatusSeverity(data.status)" />
+                            </template>
+                        </Column>
+                        <Column field="created_at" header="Submitted">
+                            <template #body="{ data }">
+                                {{ new Date(data.created_at).toLocaleString() }}
                             </template>
                         </Column>
                         <Column header="Actions">

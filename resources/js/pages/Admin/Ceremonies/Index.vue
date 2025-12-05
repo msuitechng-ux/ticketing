@@ -79,6 +79,11 @@ const getStatusSeverity = (isActive: boolean) => {
         </header>
 
         <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+            <nav class="mb-6 text-sm text-gray-500 dark:text-gray-400">
+                <Link href="/admin/dashboard" class="hover:text-gray-700 dark:hover:text-gray-200">Dashboard</Link>
+                <span class="mx-2">/</span>
+                <span class="text-gray-700 dark:text-gray-200">Ceremonies</span>
+            </nav>
             <!-- Page Header -->
             <div class="mb-8 flex items-center justify-between">
                 <div>

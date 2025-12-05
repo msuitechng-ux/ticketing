@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3'
-import Button from 'primevue/button'
-import Card from 'primevue/card'
-import InputText from 'primevue/inputtext'
-import Calendar from 'primevue/calendar'
-import Textarea from 'primevue/textarea'
-import InputNumber from 'primevue/inputnumber'
-import Checkbox from 'primevue/checkbox'
+import { computed, ref } from 'vue'
 import Avatar from 'primevue/avatar'
+import Button from 'primevue/button'
+import Calendar from 'primevue/calendar'
+import Card from 'primevue/card'
+import Checkbox from 'primevue/checkbox'
+import InputNumber from 'primevue/inputnumber'
+import InputText from 'primevue/inputtext'
 import Menu from 'primevue/menu'
-import { ref, computed } from 'vue'
+import Textarea from 'primevue/textarea'
 
 const props = defineProps<{
     auth: {
@@ -18,7 +18,39 @@ const props = defineProps<{
             email: string
         }
     }
+    ceremony: {
+        id: number
+        name: string
+        description: string | null
+        ceremony_date: string
+        venue: string
+        venue_address: string | null
+        total_capacity: number
+        base_tickets_per_graduate: number
+        ticket_request_deadline: string | null
+        redistribution_deadline: string | null
+        is_active: boolean
+    }
 }>()
+
+const parseDate = (value: string | null) => (value ? new Date(value) : null)
+
+const form = ref({
+    name: props.ceremony.name,
+    description: props.ceremony.description,
+    ceremony_date: parseDate(props.ceremony.ceremony_date),
+    venue: props.ceremony.venue,
+    venue_address: props.ceremony.venue_address,
+    total_capacity: props.ceremony.total_capacity,
+    base_tickets_per_graduate: props.ceremony.base_tickets_per_graduate,
+    ticket_request_deadline: parseDate(props.ceremony.ticket_request_deadline),
+    redistribution_deadline: parseDate(props.ceremony.redistribution_deadline),
+    is_active: props.ceremony.is_active,
+})
+
+const submit = () => {
+    router.put(`/admin/ceremonies/${props.ceremony.id}`, form.value)
+}
 
 const userMenu = ref()
 const userMenuItems = ref([
@@ -26,23 +58,6 @@ const userMenuItems = ref([
     { separator: true },
     { label: 'Logout', icon: 'pi pi-sign-out', command: () => router.post('/logout') },
 ])
-
-const form = ref({
-    name: '',
-    description: '',
-    ceremony_date: null as Date | null,
-    venue: '',
-    venue_address: '',
-    total_capacity: 500,
-    base_tickets_per_graduate: 2,
-    ticket_request_deadline: null as Date | null,
-    redistribution_deadline: null as Date | null,
-    is_active: true,
-})
-
-const submit = () => {
-    router.post('/admin/ceremonies', form.value)
-}
 
 const userInitials = computed(() => {
     const names = props.auth.user.name.split(' ')
@@ -52,7 +67,7 @@ const userInitials = computed(() => {
 
 <template>
     <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-        <Head title="Create Ceremony" />
+        <Head title="Edit Ceremony" />
 
         <!-- Header -->
         <header class="sticky top-0 z-50 border-b border-gray-200 bg-white/80 backdrop-blur-md shadow-sm dark:border-gray-700 dark:bg-gray-800/80">
@@ -63,8 +78,8 @@ const userInitials = computed(() => {
                             <i class="pi pi-ticket text-xl text-white"></i>
                         </div>
                         <div class="hidden sm:block">
-                            <h1 class="text-lg font-bold text-gray-900 dark:text-white">Create Ceremony</h1>
-                            <p class="text-xs text-gray-600 dark:text-gray-400">New Event</p>
+                            <h1 class="text-lg font-bold text-gray-900 dark:text-white">Edit Ceremony</h1>
+                            <p class="text-xs text-gray-600 dark:text-gray-400">{{ props.ceremony.name }}</p>
                         </div>
                     </Link>
                     <div class="flex items-center gap-3">
@@ -91,7 +106,7 @@ const userInitials = computed(() => {
                 <span class="mx-2">/</span>
                 <Link href="/admin/ceremonies" class="hover:text-gray-700 dark:hover:text-gray-200">Ceremonies</Link>
                 <span class="mx-2">/</span>
-                <span class="text-gray-700 dark:text-gray-200">Create</span>
+                <span class="text-gray-700 dark:text-gray-200">Edit</span>
             </nav>
             <Card class="shadow-lg">
                 <template #title>
@@ -159,8 +174,8 @@ const userInitials = computed(() => {
                         </div>
 
                         <div class="flex gap-3">
-                            <Button type="submit" label="Create Ceremony" icon="pi pi-check" class="shadow-md" />
-                            <Link href="/admin/ceremonies">
+                            <Button type="submit" label="Save Changes" icon="pi pi-check" class="shadow-md" />
+                            <Link :href="`/admin/ceremonies/${props.ceremony.id}`">
                                 <Button label="Cancel" severity="secondary" outlined />
                             </Link>
                         </div>

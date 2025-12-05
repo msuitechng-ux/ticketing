@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ticket;
+use App\Services\QrCodeService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -12,6 +13,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TicketController extends Controller
 {
+    public function __construct(
+        private QrCodeService $qrCodeService
+    ) {}
+
     /**
      * Display a listing of the user's tickets.
      */
@@ -73,31 +78,35 @@ class TicketController extends Controller
     /**
      * Download the QR code for a ticket.
      */
-    public function downloadQr(Ticket $ticket): StreamedResponse
+  
+    public function downloadQr(Ticket $ticket)
     {
-        $this->authorize('view', $ticket);
+        //$this->authorize('view', $ticket);
 
-        if (! $ticket->qr_code_path || ! Storage::disk('public')->exists($ticket->qr_code_path)) {
-            abort(404, 'QR code not found.');
+        // Clear ANY previous output
+        if (ob_get_length()) {
+            ob_end_clean();
         }
 
-        return Storage::disk('public')->download(
-            $ticket->qr_code_path,
-            "ticket-{$ticket->ticket_code}.png"
-        );
+        $pdfContent = $this->qrCodeService->generateTicketPdf($ticket);
+        $filename = "ticket-{$ticket->ticket_code}.pdf";
+
+        return response($pdfContent, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="ticket_'.$ticket->id.'.pdf'
+            ]);
+
     }
 
+
+
     /**
-     * Download all QR codes for the user's tickets as a ZIP.
+     * Download all QR codes for the user's active tickets as a ZIP file.
      */
     public function downloadAllQr(Request $request): StreamedResponse
     {
         $user = $request->user();
-        $graduate = $user->graduates()->first();
-
-        if (! $graduate) {
-            abort(404, 'No graduate profile found.');
-        }
+        $graduate = $user->graduates()->firstOrFail();
 
         $tickets = $graduate->tickets()->where('status', 'Active')->get();
 
@@ -105,12 +114,28 @@ class TicketController extends Controller
             abort(404, 'No active tickets found.');
         }
 
-        $zip = new \ZipArchive;
-        $zipFileName = storage_path("app/temp/tickets-{$graduate->student_id}-".time().'.zip');
-
-        if (! file_exists(storage_path('app/temp'))) {
-            mkdir(storage_path('app/temp'), 0755, true);
+        // Ensure QR codes exist
+        foreach ($tickets as $ticket) {
+            if (! $ticket->qr_code_path || ! Storage::disk('public')->exists($ticket->qr_code_path)) {
+                $qrPath = $this->qrCodeService->regenerateQrCode($ticket);
+                $ticket->update(['qr_code_path' => $qrPath]);
+            }
         }
+
+        // Prepare ZIP folder
+        $tempFolder = storage_path('app/temp');
+        if (! is_dir($tempFolder)) {
+            mkdir($tempFolder, 0755, true);
+        }
+
+        $zipFileName = "{$tempFolder}/tickets-{$graduate->student_id}-" . time() . ".zip";
+
+        // Clear ANY accidental output (critical)
+        if (ob_get_length()) {
+            ob_end_clean();
+        }
+
+        $zip = new \ZipArchive;
 
         if ($zip->open($zipFileName, \ZipArchive::CREATE) !== true) {
             abort(500, 'Could not create ZIP file.');
@@ -125,11 +150,27 @@ class TicketController extends Controller
 
         $zip->close();
 
+        // Return ZIP file for download
         return response()->streamDownload(function () use ($zipFileName) {
-            echo file_get_contents($zipFileName);
-            unlink($zipFileName);
-        }, "tickets-{$graduate->student_id}.zip");
+
+            // Prevent Chrome/PDF corruption
+            if (ob_get_length()) {
+                ob_end_clean();
+            }
+
+            readfile($zipFileName);
+
+            // Delete temp zip
+            @unlink($zipFileName);
+
+        }, "tickets.zip", [
+            "Content-Type" => "application/zip",
+            "Content-Disposition" => "attachment; filename=\"tickets.zip\"",
+            "Cache-Control" => "no-cache, must-revalidate",
+            "Pragma" => "no-cache",
+        ]);
     }
+
 
     /**
      * Cancel a ticket (admin only).

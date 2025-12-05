@@ -41,7 +41,7 @@ class CeremonyController extends Controller
     {
         $ceremony = Ceremony::create($request->validated());
 
-        return redirect()->route('ceremonies.index')
+        return redirect()->route('admin.ceremonies.index')
             ->with('success', "Ceremony '{$ceremony->name}' created successfully.");
     }
 
@@ -89,7 +89,7 @@ class CeremonyController extends Controller
     {
         $ceremony->update($request->validated());
 
-        return redirect()->route('ceremonies.show', $ceremony)
+        return redirect()->route('admin.ceremonies.show', $ceremony)
             ->with('success', "Ceremony '{$ceremony->name}' updated successfully.");
     }
 
@@ -101,7 +101,7 @@ class CeremonyController extends Controller
         $name = $ceremony->name;
         $ceremony->delete();
 
-        return redirect()->route('ceremonies.index')
+        return redirect()->route('admin.ceremonies.index')
             ->with('success', "Ceremony '{$name}' deleted successfully.");
     }
 }

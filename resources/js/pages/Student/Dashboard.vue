@@ -249,6 +249,11 @@ const getRequestStatusSeverity = (status: string) => {
                                     No tickets allocated yet
                                 </div>
                             </template>
+                            <Column field="ceremony.name" header="Ceremony">
+                                <template #body="{ data }">
+                                    {{ data.ceremony?.name || '-' }}
+                                </template>
+                            </Column>
                             <Column field="ticket_code" header="Ticket Code" />
                             <Column field="ticket_type" header="Type" />
                             <Column field="guest_name" header="Guest Name">
@@ -267,9 +272,11 @@ const getRequestStatusSeverity = (status: string) => {
                                         <Link :href="`/student/tickets/${data.id}`">
                                             <Button label="View" size="small" text />
                                         </Link>
-                                        <a v-if="data.status === 'Active'" :href="`/student/tickets/${data.id}/download-qr`" download>
+                                         <a v-if="data.status === 'Active'" 
+                                        :href="`/student/tickets/${data.id}/download-qr`">
                                             <Button label="Download QR" size="small" severity="success" text />
                                         </a>
+
                                     </div>
                                 </template>
                             </Column>

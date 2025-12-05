@@ -3,11 +3,13 @@
 namespace App\Services;
 
 use App\Models\Ticket;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel;
 use Endroid\QrCode\RoundBlockSizeMode;
 use Endroid\QrCode\Writer\PngWriter;
+use FPDF;
 use Illuminate\Support\Facades\Storage;
 
 class QrCodeService
@@ -19,22 +21,57 @@ class QrCodeService
     {
         $qrData = $this->encodeTicketData($ticket);
 
-        $result = Builder::create()
-            ->writer(new PngWriter)
-            ->writerOptions([])
-            ->data($qrData)
-            ->encoding(new Encoding('UTF-8'))
-            ->errorCorrectionLevel(ErrorCorrectionLevel::High)
-            ->size(300)
-            ->margin(10)
-            ->roundBlockSizeMode(RoundBlockSizeMode::Margin)
-            ->build();
+        // endroid/qr-code v6 no longer exposes Builder::create(); pass options directly to build().
+        $result = (new Builder())->build(
+            writer: new PngWriter(),
+            writerOptions: [],
+            data: $qrData,
+            encoding: new Encoding('UTF-8'),
+            errorCorrectionLevel: ErrorCorrectionLevel::High,
+            size: 300,
+            margin: 10,
+            roundBlockSizeMode: RoundBlockSizeMode::Margin,
+        );
 
         $fileName = "qr-codes/{$ticket->ceremony_id}/{$ticket->ticket_code}.png";
 
         Storage::disk('public')->put($fileName, $result->getString());
 
         return $fileName;
+    }
+
+    /**
+     * Generate a ticket PDF with QR, ceremony name, ticket code, and guest info.
+     */
+   public function generateTicketPdf(Ticket $ticket): string
+    {
+       $ticket->loadMissing('ceremony');
+
+        // Ensure QR exists
+        $path = $this->ensureQrImageExists($ticket);
+
+        // Convert QR to base64 (DomPDF friendly)
+        $qrBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($path));
+
+        $pdf = Pdf::loadView('pdf.ticket', [
+            'ticket' => $ticket,
+            'qrBase64' => $qrBase64
+        ]);
+
+        return $pdf->output();
+    }
+
+    /**
+     * Ensure QR image exists on disk and return its absolute path.
+     */
+    private function ensureQrImageExists(Ticket $ticket): string
+    {
+        if (! $ticket->qr_code_path || ! Storage::disk('public')->exists($ticket->qr_code_path)) {
+            $qrPath = $this->regenerateQrCode($ticket);
+            $ticket->qr_code_path = $qrPath;
+        }
+
+        return Storage::disk('public')->path($ticket->qr_code_path);
     }
 
     /**

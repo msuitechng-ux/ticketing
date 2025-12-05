@@ -24,9 +24,7 @@ class TicketPolicy
             return true;
         }
 
-        $graduate = $user->graduates()->first();
-
-        return $graduate && $ticket->graduate_id === $graduate->id;
+        return $user->graduates()->where('id', $ticket->graduate_id)->exists();
     }
 
     /**
@@ -46,9 +44,8 @@ class TicketPolicy
             return true;
         }
 
-        $graduate = $user->graduates()->first();
-
-        return $graduate && $ticket->graduate_id === $graduate->id && $ticket->status === 'Active';
+        return $user->graduates()->where('id', $ticket->graduate_id)->exists()
+            && $ticket->status === 'Active';
     }
 
     /**

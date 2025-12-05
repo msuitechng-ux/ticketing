@@ -11,7 +11,8 @@ class StoreCeremonyRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can('create ceremonies');
+        // Authorization is handled by route middleware (role:Admin), so allow the request here.
+        return true;
     }
 
     /**

@@ -35,7 +35,6 @@ class DashboardController extends Controller
 
         $recentTicketRequests = TicketRequest::query()
             ->with(['graduate.user', 'graduate.ceremony'])
-            ->where('status', 'Pending')
             ->latest()
             ->limit(10)
             ->get();
